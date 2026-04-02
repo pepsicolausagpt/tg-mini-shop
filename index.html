@@ -3,59 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Магазин кастомизации</title>
+    <title>Vibe Store</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --vibe-purple: #8a2be2;
+            --vibe-cyan: #00f2ff;
+            --vibe-dark: #0f0c29;
+            --vibe-gradient: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+        }
+
         body {
-            font-family: sans-serif;
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--vibe-gradient);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Хедер с балансом */
+        .header {
+            width: 90%;
             padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .item-card {
-            border: 2px solid var(--tg-theme-button-color, #2481cc);
-            border-radius: 10px;
-            padding: 15px;
-            margin: 15px 0;
+
+        .balance-container {
+            display: flex;
+            flex-direction: column;
         }
-        button {
-            background-color: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 16px;
+
+        .balance-label { font-size: 12px; color: var(--vibe-cyan); text-transform: uppercase; letter-spacing: 1px; }
+        .balance-value { font-size: 24px; font-weight: bold; text-shadow: 0 0 10px var(--vibe-cyan); }
+
+        .btn-topup {
+            background: transparent;
+            border: 2px solid var(--vibe-cyan);
+            color: var(--vibe-cyan);
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: bold;
             cursor: pointer;
-            width: 100%;
+            transition: 0.3s;
         }
+
+        .btn-topup:active { transform: scale(0.95); background: var(--vibe-cyan); color: var(--vibe-dark); }
+
+        /* Сетка товаров */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+            width: 90%;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .card:hover { border-color: var(--vibe-purple); box-shadow: 0 0 15px rgba(138, 43, 226, 0.3); }
+
+        .card img { width: 50px; height: 50px; margin-bottom: 10px; filter: drop-shadow(0 0 5px var(--vibe-purple)); }
+        .card h3 { font-size: 14px; margin: 5px 0; text-align: center; }
+        .card .price { font-size: 16px; font-weight: bold; color: var(--vibe-cyan); margin-bottom: 10px; }
+
+        .btn-buy {
+            background: var(--vibe-purple);
+            color: white;
+            border: none;
+            padding: 8px;
+            width: 100%;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-buy:disabled { background: #555; cursor: not-allowed; }
+
+        /* Анимация монеток */
+        @keyframes coin-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #fff; }
+            100% { transform: scale(1); }
+        }
+        .animate-balance { animation: coin-pop 0.3s ease-in-out; }
     </style>
 </head>
 <body>
 
-    <h2 id="greeting">Привет, покупатель!</h2>
-    <p>Прокачай свой профиль в мессенджере 🚀</p>
+    <div class="header">
+        <div class="balance-container">
+            <span class="balance-label">Твой баланс</span>
+            <span id="balance" class="balance-value">500 💎</span>
+        </div>
+        <button class="btn-topup" onclick="topUp()">+ Пополнить</button>
+    </div>
 
-    <div class="item-card">
-        <h3>🌟 VIP Статус (1 месяц)</h3>
-        <p>Цветной ник, анимированный аватар и приоритет в голосовых комнатах.</p>
-        <button onclick="buyItem('VIP_STATUS')">Купить за 150 💎</button>
+    <div class="grid">
+        <div class="card">
+            <img src="https://img.icons8.com/fluency/96/crown.png" alt="vip">
+            <h3>Vibe VIP</h3>
+            <span class="price">150 💎</span>
+            <button class="btn-buy" onclick="buyItem('VIP', 150)">Купить</button>
+        </div>
+        <div class="card">
+            <img src="https://img.icons8.com/fluency/96/verified-badge.png" alt="badge">
+            <h3>Бета-тестер</h3>
+            <span class="price">50 💎</span>
+            <button class="btn-buy" onclick="buyItem('BETA_BADGE', 50)">Взять</button>
+        </div>
+        <div class="card">
+            <img src="https://img.icons8.com/fluency/96/smiling-face-with-heart.png" alt="emoji">
+            <h3>Анимированные Эмодзи</h3>
+            <span class="price">200 💎</span>
+            <button class="btn-buy" onclick="buyItem('EMOJIS', 200)">Открыть</button>
+        </div>
+        <div class="card">
+            <img src="https://img.icons8.com/fluency/96/sparkling-diamond.png" alt="status">
+            <h3>Ультра Статус</h3>
+            <span class="price">500 💎</span>
+            <button class="btn-buy" onclick="buyItem('ULTRA', 500)">Купить</button>
+        </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        let userName = "Незнакомец";
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            userName = tg.initDataUnsafe.user.first_name;
-        }
-        document.getElementById('greeting').innerText = `Привет, ${userName}!`;
+        let balance = 500;
+        const balanceEl = document.getElementById('balance');
 
-        function buyItem(itemId) {
-            tg.HapticFeedback.impactOccurred('heavy'); 
-            tg.sendData(JSON.stringify({ action: 'buy', item: itemId }));
-            tg.close();
+        function updateBalanceDisplay() {
+            balanceEl.innerText = `${balance} 💎`;
+            balanceEl.classList.add('animate-balance');
+            setTimeout(() => balanceEl.classList.remove('animate-balance'), 300);
+        }
+
+        function topUp() {
+            balance += 100;
+            tg.HapticFeedback.notificationOccurred('success');
+            updateBalanceDisplay();
+        }
+
+        function buyItem(item, price) {
+            if (balance >= price) {
+                balance -= price;
+                updateBalanceDisplay();
+                tg.HapticFeedback.impactOccurred('medium');
+                
+                // Отправляем данные боту
+                tg.sendData(JSON.stringify({
+                    action: 'purchase',
+                    item: item,
+                    remaining_balance: balance
+                }));
+                
+                tg.close();
+            } else {
+                tg.HapticFeedback.notificationOccurred('error');
+                alert('Недостаточно алмазов! Пополни баланс.');
+            }
         }
     </script>
 </body>
