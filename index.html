@@ -2,252 +2,365 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibe Premium Store</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vibe App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg-color: #090e14; /* Глубокий темный как на скрине */
+            --panel-bg: #131b26; /* Цвет карточек */
+            --accent: #00f2ff; /* Неоновый циан */
+            --accent-glow: rgba(0, 242, 255, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #6b7b8c;
+            --danger: #ff4757;
         }
 
-        /* Системные шрифты (Apple стиль) */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
-            background-color: #000000;
-            background-image: radial-gradient(circle at 50% -20%, #1a1a2e, #000000 80%);
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 80px; /* Место под нижнее меню */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- Навигация (Нижнее меню) --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(19, 27, 38, 0.9);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 242, 255, 0.2);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+            position: relative;
+            transition: 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
+            gap: 5px;
         }
 
-        /* Премиальный Хедер со стеклом */
-        .header {
-            width: 85%;
-            padding: 20px 25px;
-            margin-top: 20px;
+        .nav-item span { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .nav-item.active {
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background: var(--accent);
+            color: var(--bg-color);
+            font-size: 10px;
+            font-weight: 800;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        /* --- Экраны (Вкладки) --- */
+        .view { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .view.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Типографика --- */
+        h1 { font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        h1 i { color: var(--accent); }
+
+        /* --- Кнопки --- */
+        .btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+            box-shadow: inset 0 0 0 0 var(--accent);
+        }
+
+        .btn:active { background: var(--accent); color: var(--bg-color); box-shadow: 0 0 15px var(--accent-glow); }
+        .btn.solid { background: var(--accent); color: var(--bg-color); }
+        .btn.solid:active { transform: scale(0.95); }
+
+        /* --- Магазин (Сетка) --- */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .card:hover { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
+        .card i { font-size: 32px; color: var(--accent); margin-bottom: 15px; text-shadow: 0 0 15px var(--accent-glow); }
+        .card h3 { font-size: 14px; margin-bottom: 5px; font-weight: 600; }
+        .card .price { font-size: 12px; color: var(--text-muted); margin-bottom: 15px; }
+
+        /* --- Корзина --- */
+        .cart-empty { text-align: center; color: var(--text-muted); margin-top: 50px; font-size: 14px; }
+        .cart-empty i { font-size: 40px; margin-bottom: 15px; opacity: 0.5; }
+        .cart-item {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
         }
-
-        .balance-container { display: flex; flex-direction: column; }
-
-        .balance-label { 
-            font-size: 13px; 
-            color: #8e8e93; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-            margin-bottom: 4px;
-            font-weight: 600;
-        }
+        .cart-item-info { display: flex; align-items: center; gap: 15px; }
+        .cart-item-info i { color: var(--accent); font-size: 20px; }
+        .cart-item-title { font-weight: 600; font-size: 14px; }
+        .cart-item-price { color: var(--accent); font-size: 12px; font-weight: 800; }
+        .remove-btn { color: var(--danger); background: none; border: none; font-size: 18px; cursor: pointer; padding: 5px; }
         
-        .balance-value { 
-            font-size: 28px; 
-            font-weight: 800; 
-            background: linear-gradient(90deg, #00C6FF 0%, #0072FF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(0, 198, 255, 0.4);
+        .cart-total { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+        .cart-total span:last-child { color: var(--accent); text-shadow: 0 0 10px var(--accent-glow); }
+
+        /* --- Кошелек --- */
+        .wallet-card {
+            background: linear-gradient(135deg, var(--panel-bg), #0f151e);
+            border: 1px solid var(--accent);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.1);
+            margin-bottom: 30px;
         }
-
-        /* Кнопка пополнения */
-        .btn-topup {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: 600;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-
-        .btn-topup:active { 
-            transform: scale(0.92); 
-            background: rgba(255, 255, 255, 0.2); 
-        }
-
-        /* Сетка товаров */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 30px 20px;
-            width: 85%;
-        }
-
-        /* Эффект пульсации для премиум карточки */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 215, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
-        }
-
-        .card {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 25px;
-            padding: 20px 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative;
-        }
-
-        .card:active { transform: scale(0.95); }
-
-        .card:hover { 
-            border-color: rgba(255, 255, 255, 0.3);
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        }
-
-        /* 3D Иконки */
-        .card img { 
-            width: 70px; 
-            height: 70px; 
-            margin-bottom: 15px; 
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
-            transition: transform 0.3s ease;
-        }
-        
-        .card:hover img { transform: scale(1.1) translateY(-5px); }
-
-        .card h3 { font-size: 16px; margin: 5px 0; font-weight: 600; letter-spacing: 0.5px; text-align: center; }
-        .card .price { font-size: 15px; font-weight: 500; color: #8e8e93; margin-bottom: 15px; }
-
-        /* Кнопка покупки */
-        .btn-buy {
-            background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
-            color: white;
-            border: none;
-            padding: 12px;
-            width: 100%;
-            border-radius: 16px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .btn-buy:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2); }
-
-        /* Выделенная карточка (Премиум) */
-        .card.premium {
-            border: 1px solid rgba(255, 215, 0, 0.4);
-            animation: pulse 2s infinite;
-        }
-        .card.premium .btn-buy {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #000;
-            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-        }
-
-        /* Анимация баланса */
-        @keyframes balance-update {
-            0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.1); filter: brightness(1.5); text-shadow: 0 0 30px #00C6FF; }
-            100% { transform: scale(1); filter: brightness(1); }
-        }
-        .animate-balance { animation: balance-update 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .wallet-label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; }
+        .wallet-balance { font-size: 40px; font-weight: 800; color: var(--accent); margin: 10px 0; text-shadow: 0 0 20px var(--accent-glow); }
+        .topup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="balance-container">
-            <span class="balance-label">Баланс Vibe</span>
-            <span id="balance" class="balance-value">500 💎</span>
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchView('shop', this)">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Каталог</span>
         </div>
-        <button class="btn-topup" onclick="topUp()">+ 100 💎</button>
+        <div class="nav-item" onclick="switchView('cart', this)">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span>Корзина</span>
+            <div class="cart-badge" id="cart-badge">0</div>
+        </div>
+        <div class="nav-item" onclick="switchView('wallet', this)">
+            <i class="fa-solid fa-wallet"></i>
+            <span>Кошелек</span>
+        </div>
+    </nav>
+
+    <div id="shop" class="view active">
+        <h1><i class="fa-solid fa-bolt"></i> Vibe Store</h1>
+        <div class="grid">
+            <div class="card">
+                <i class="fa-solid fa-crown"></i>
+                <h3>VIP Статус</h3>
+                <span class="price">300 VIBE</span>
+                <button class="btn" onclick="addToCart('VIP Статус', 300, 'fa-crown')">В корзину</button>
+            </div>
+            <div class="card">
+                <i class="fa-solid fa-palette"></i>
+                <h3>Цветной Ник</h3>
+                <span class="price">150 VIBE</span>
+                <button class="btn" onclick="addToCart('Цветной Ник', 150, 'fa-palette')">В корзину</button>
+            </div>
+            <div class="card">
+                <i class="fa-solid fa-certificate"></i>
+                <h3>Значок "Beta"</h3>
+                <span class="price">50 VIBE</span>
+                <button class="btn" onclick="addToCart('Значок Beta', 50, 'fa-certificate')">В корзину</button>
+            </div>
+            <div class="card">
+                <i class="fa-solid fa-ghost"></i>
+                <h3>Невидимка</h3>
+                <span class="price">500 VIBE</span>
+                <button class="btn" onclick="addToCart('Невидимка', 500, 'fa-ghost')">В корзину</button>
+            </div>
+        </div>
     </div>
 
-    <div class="grid">
-        <div class="card">
-            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" alt="badge">
-            <h3>Галочка</h3>
-            <span class="price">50 💎</span>
-            <button class="btn-buy" onclick="buyItem('BADGE', 50)">Купить</button>
+    <div id="cart" class="view">
+        <h1><i class="fa-solid fa-bag-shopping"></i> Заказ</h1>
+        <div id="cart-items">
+            <div class="cart-empty">
+                <i class="fa-solid fa-box-open"></i>
+                <p>Твоя корзина пуста</p>
+            </div>
         </div>
-        <div class="card">
-            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Smiling%20Face%20with%20Horns.png" alt="emoji">
-            <h3>Цветной Ник</h3>
-            <span class="price">150 💎</span>
-            <button class="btn-buy" onclick="buyItem('COLOR_NAME', 150)">Купить</button>
+        
+        <div id="cart-footer" style="display: none;">
+            <div class="cart-total">
+                <span>Итого:</span>
+                <span id="cart-total-price">0 VIBE</span>
+            </div>
+            <button class="btn solid" onclick="checkout()">Оплатить</button>
         </div>
-        <div class="card">
-            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Crown.png" alt="vip">
-            <h3>VIP Роль</h3>
-            <span class="price">300 💎</span>
-            <button class="btn-buy" onclick="buyItem('VIP', 300)">Купить</button>
+    </div>
+
+    <div id="wallet" class="view">
+        <h1><i class="fa-solid fa-microchip"></i> Банк</h1>
+        
+        <div class="wallet-card">
+            <div class="wallet-label">Твой баланс</div>
+            <div class="wallet-balance" id="wallet-display">500</div>
+            <div class="wallet-label">VIBE COINS</div>
         </div>
-        <div class="card premium">
-            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gem%20Stone.png" alt="status">
-            <h3>Ультра Статус</h3>
-            <span class="price">500 💎</span>
-            <button class="btn-buy" onclick="buyItem('ULTRA', 500)">Купить</button>
+
+        <h3 style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted); text-transform: uppercase;">Пополнить счет</h3>
+        <div class="topup-grid">
+            <button class="btn" onclick="topUp(100)">+ 100</button>
+            <button class="btn" onclick="topUp(500)">+ 500</button>
+            <button class="btn" onclick="topUp(1000)">+ 1000</button>
+            <button class="btn" onclick="topUp(5000)">+ 5000</button>
         </div>
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp;
+        const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
+        // Состояние приложения
         let balance = 500;
-        const balanceEl = document.getElementById('balance');
+        let cart = [];
 
-        function updateBalanceDisplay() {
-            balanceEl.innerText = `${balance} 💎`;
+        // Переключение вкладок
+        function switchView(viewId, navElement) {
+            tg.HapticFeedback.selectionChanged();
             
-            // Перезапускаем анимацию
-            balanceEl.classList.remove('animate-balance');
-            void balanceEl.offsetWidth; // Магия для сброса анимации
-            balanceEl.classList.add('animate-balance');
+            // Скрываем все экраны
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            // Убираем активный класс у кнопок меню
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Показываем нужный экран и подсвечиваем кнопку
+            document.getElementById(viewId).classList.add('active');
+            navElement.classList.add('active');
         }
 
-        function topUp() {
-            balance += 100;
+        // Добавление в корзину
+        function addToCart(name, price, icon) {
+            tg.HapticFeedback.impactOccurred('light');
+            cart.push({ id: Date.now(), name, price, icon });
+            updateCartUI();
+            
+            // Анимация значка
+            const badge = document.getElementById('cart-badge');
+            badge.style.transform = 'scale(1.5)';
+            setTimeout(() => badge.style.transform = 'scale(1)', 200);
+        }
+
+        // Удаление из корзины
+        function removeFromCart(id) {
+            tg.HapticFeedback.impactOccurred('light');
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        // Обновление интерфейса корзины
+        function updateCartUI() {
+            const badge = document.getElementById('cart-badge');
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartFooter = document.getElementById('cart-footer');
+            const totalPriceEl = document.getElementById('cart-total-price');
+
+            // Обновляем бейдж на иконке
+            badge.innerText = cart.length;
+            badge.style.opacity = cart.length > 0 ? '1' : '0';
+
+            if (cart.length === 0) {
+                cartItemsEl.innerHTML = `<div class="cart-empty"><i class="fa-solid fa-box-open"></i><p>Твоя корзина пуста</p></div>`;
+                cartFooter.style.display = 'none';
+                return;
+            }
+
+            // Рендерим товары
+            cartItemsEl.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <i class="fa-solid ${item.icon}"></i>
+                        <div>
+                            <div class="cart-item-title">${item.name}</div>
+                            <div class="cart-item-price">${item.price} VIBE</div>
+                        </div>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromCart(${item.id})"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `).join('');
+
+            // Считаем сумму
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            totalPriceEl.innerText = `${total} VIBE`;
+            cartFooter.style.display = 'block';
+        }
+
+        // Пополнение баланса
+        function topUp(amount) {
             tg.HapticFeedback.notificationOccurred('success');
-            updateBalanceDisplay();
+            balance += amount;
+            
+            const display = document.getElementById('wallet-display');
+            display.innerText = balance;
+            display.style.transform = 'scale(1.2)';
+            setTimeout(() => display.style.transform = 'scale(1)', 200);
         }
 
-        function buyItem(item, price) {
-            if (balance >= price) {
-                balance -= price;
-                updateBalanceDisplay();
-                tg.HapticFeedback.impactOccurred('medium');
+        // Оплата (Checkout)
+        function checkout() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            
+            if (balance >= total) {
+                balance -= total;
+                tg.HapticFeedback.notificationOccurred('success');
                 
-                // Чуть задерживаем закрытие, чтобы пользователь увидел красивую анимацию списания
-                setTimeout(() => {
-                    tg.sendData(JSON.stringify({
-                        action: 'purchase',
-                        item: item,
-                        price: price,
-                        remaining: balance
-                    }));
-                    tg.close();
-                }, 400);
-
+                // Собираем названия покупок
+                const itemNames = cart.map(i => i.name);
+                
+                // Отправляем данные в Python
+                tg.sendData(JSON.stringify({
+                    action: 'checkout',
+                    items: itemNames,
+                    total_spent: total,
+                    remaining_balance: balance
+                }));
+                
+                tg.close();
             } else {
                 tg.HapticFeedback.notificationOccurred('error');
-                
-                // Встроенное предупреждение Telegram вместо системного alert
-                tg.showAlert('Недостаточно алмазов! Нажми на кнопку пополнения.');
+                tg.showAlert(`Недостаточно средств!\nНужно: ${total} VIBE\nУ тебя: ${balance} VIBE\nПерейди во вкладку "Кошелек" для пополнения.`);
             }
         }
     </script>
