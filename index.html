@@ -1,46 +1,62 @@
-import asyncio
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import CommandStart
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.types.web_app_info import WebAppInfo
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Магазин кастомизации</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            text-align: center;
+            padding: 20px;
+        }
+        .item-card {
+            border: 2px solid var(--tg-theme-button-color, #2481cc);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
 
-# Сюда вставишь токен своего бота от @BotFather
-TOKEN = '8634007338:AAFRG60D3dXcZvQSw7sfTileDPZG6q3cTF4' 
+    <h2 id="greeting">Привет, покупатель!</h2>
+    <p>Прокачай свой профиль в мессенджере 🚀</p>
 
-# Сюда вставим ссылку на твой HTML файл (Telegram требует, чтобы ссылка начиналась с https://)
-WEBAPP_URL = 'https://example.com' 
+    <div class="item-card">
+        <h3>🌟 VIP Статус (1 месяц)</h3>
+        <p>Цветной ник, анимированный аватар и приоритет в голосовых комнатах.</p>
+        <button onclick="buyItem('VIP_STATUS')">Купить за 150 💎</button>
+    </div>
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
 
-# Обрабатываем команду /start
-@dp.message(CommandStart())
-async def start_cmd(message: types.Message):
-    # Создаем кнопку, которая откроет наш Mini App
-    markup = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🛒 Открыть магазин статусов", web_app=WebAppInfo(url=WEBAPP_URL))]
-        ],
-        resize_keyboard=True
-    )
-    
-    await message.answer(
-        "Привет! Готов прокачать свой профиль в мессенджере? Жми на кнопку ниже 👇", 
-        reply_markup=markup
-    )
+        let userName = "Незнакомец";
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            userName = tg.initDataUnsafe.user.first_name;
+        }
+        document.getElementById('greeting').innerText = `Привет, ${userName}!`;
 
-# Ловим данные, которые присылает наш HTML через функцию tg.sendData()
-@dp.message(F.web_app_data)
-async def web_app_handler(message: types.Message):
-    # Достаем то, что прислал JS (у нас там JSON: { action: 'buy', item: 'VIP_STATUS' })
-    data = message.web_app_data.data 
-    
-    # Отвечаем пользователю
-    await message.answer(f"✅ Транзакция прошла! Данные от WebApp: \n`{data}`", parse_mode="Markdown")
-
-async def main():
-    print("🤖 Бот запущен! Вайб-кодинг в процессе...")
-    await dp.start_polling(bot)
-
-if __name__ == '__main__':
-    asyncio.run(main())
+        function buyItem(itemId) {
+            tg.HapticFeedback.impactOccurred('heavy'); 
+            tg.sendData(JSON.stringify({ action: 'buy', item: itemId }));
+            tg.close();
+        }
+    </script>
+</body>
+</html>
