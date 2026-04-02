@@ -1,0 +1,46 @@
+import asyncio
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import CommandStart
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types.web_app_info import WebAppInfo
+
+# Сюда вставишь токен своего бота от @BotFather
+TOKEN = '8634007338:AAFRG60D3dXcZvQSw7sfTileDPZG6q3cTF4' 
+
+# Сюда вставим ссылку на твой HTML файл (Telegram требует, чтобы ссылка начиналась с https://)
+WEBAPP_URL = 'https://example.com' 
+
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
+
+# Обрабатываем команду /start
+@dp.message(CommandStart())
+async def start_cmd(message: types.Message):
+    # Создаем кнопку, которая откроет наш Mini App
+    markup = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🛒 Открыть магазин статусов", web_app=WebAppInfo(url=WEBAPP_URL))]
+        ],
+        resize_keyboard=True
+    )
+    
+    await message.answer(
+        "Привет! Готов прокачать свой профиль в мессенджере? Жми на кнопку ниже 👇", 
+        reply_markup=markup
+    )
+
+# Ловим данные, которые присылает наш HTML через функцию tg.sendData()
+@dp.message(F.web_app_data)
+async def web_app_handler(message: types.Message):
+    # Достаем то, что прислал JS (у нас там JSON: { action: 'buy', item: 'VIP_STATUS' })
+    data = message.web_app_data.data 
+    
+    # Отвечаем пользователю
+    await message.answer(f"✅ Транзакция прошла! Данные от WebApp: \n`{data}`", parse_mode="Markdown")
+
+async def main():
+    print("🤖 Бот запущен! Вайб-кодинг в процессе...")
+    await dp.start_polling(bot)
+
+if __name__ == '__main__':
+    asyncio.run(main())
