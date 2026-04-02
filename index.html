@@ -111,4 +111,145 @@
         .card:active { transform: scale(0.95); }
 
         .card:hover { 
-            border-color: rgba(255, 255, 25
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        /* 3D Иконки */
+        .card img { 
+            width: 70px; 
+            height: 70px; 
+            margin-bottom: 15px; 
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover img { transform: scale(1.1) translateY(-5px); }
+
+        .card h3 { font-size: 16px; margin: 5px 0; font-weight: 600; letter-spacing: 0.5px; text-align: center; }
+        .card .price { font-size: 15px; font-weight: 500; color: #8e8e93; margin-bottom: 15px; }
+
+        /* Кнопка покупки */
+        .btn-buy {
+            background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 16px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 122, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-buy:active { transform: scale(0.95); box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2); }
+
+        /* Выделенная карточка (Премиум) */
+        .card.premium {
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            animation: pulse 2s infinite;
+        }
+        .card.premium .btn-buy {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #000;
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Анимация баланса */
+        @keyframes balance-update {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1); filter: brightness(1.5); text-shadow: 0 0 30px #00C6FF; }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .animate-balance { animation: balance-update 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="balance-container">
+            <span class="balance-label">Баланс Vibe</span>
+            <span id="balance" class="balance-value">500 💎</span>
+        </div>
+        <button class="btn-topup" onclick="topUp()">+ 100 💎</button>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Symbols/Check%20Mark%20Button.png" alt="badge">
+            <h3>Галочка</h3>
+            <span class="price">50 💎</span>
+            <button class="btn-buy" onclick="buyItem('BADGE', 50)">Купить</button>
+        </div>
+        <div class="card">
+            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Smiling%20Face%20with%20Horns.png" alt="emoji">
+            <h3>Цветной Ник</h3>
+            <span class="price">150 💎</span>
+            <button class="btn-buy" onclick="buyItem('COLOR_NAME', 150)">Купить</button>
+        </div>
+        <div class="card">
+            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Crown.png" alt="vip">
+            <h3>VIP Роль</h3>
+            <span class="price">300 💎</span>
+            <button class="btn-buy" onclick="buyItem('VIP', 300)">Купить</button>
+        </div>
+        <div class="card premium">
+            <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Gem%20Stone.png" alt="status">
+            <h3>Ультра Статус</h3>
+            <span class="price">500 💎</span>
+            <button class="btn-buy" onclick="buyItem('ULTRA', 500)">Купить</button>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let balance = 500;
+        const balanceEl = document.getElementById('balance');
+
+        function updateBalanceDisplay() {
+            balanceEl.innerText = `${balance} 💎`;
+            
+            // Перезапускаем анимацию
+            balanceEl.classList.remove('animate-balance');
+            void balanceEl.offsetWidth; // Магия для сброса анимации
+            balanceEl.classList.add('animate-balance');
+        }
+
+        function topUp() {
+            balance += 100;
+            tg.HapticFeedback.notificationOccurred('success');
+            updateBalanceDisplay();
+        }
+
+        function buyItem(item, price) {
+            if (balance >= price) {
+                balance -= price;
+                updateBalanceDisplay();
+                tg.HapticFeedback.impactOccurred('medium');
+                
+                // Чуть задерживаем закрытие, чтобы пользователь увидел красивую анимацию списания
+                setTimeout(() => {
+                    tg.sendData(JSON.stringify({
+                        action: 'purchase',
+                        item: item,
+                        price: price,
+                        remaining: balance
+                    }));
+                    tg.close();
+                }, 400);
+
+            } else {
+                tg.HapticFeedback.notificationOccurred('error');
+                
+                // Встроенное предупреждение Telegram вместо системного alert
+                tg.showAlert('Недостаточно алмазов! Нажми на кнопку пополнения.');
+            }
+        }
+    </script>
+</body>
+</html>
